@@ -2539,6 +2539,18 @@ static Value builtinIntlNumberFormatSupportedLocalesOf(ExecutionState& state, Va
     return supportedLocales(state, availableLocales, requestedLocales, options);
 }
 
+static Value builtinIntlGetCanonicalLocales(ExecutionState& state, Value thisValue, size_t argc, Value* argv, bool isNewExpression)
+{
+    // Let ll be ? CanonicalizeLocaleList(locales).
+    ValueVector ll = canonicalizeLocaleList(state, argv[0]);
+    // Return CreateArrayFromList(ll);
+    ArrayObject* ret = new ArrayObject(state, 0.0);
+    for (size_t i = 0; i < ll.size(); i++) {
+        ret->defineOwnProperty(state, ObjectPropertyName(state, Value(i)), ObjectPropertyDescriptor(Value(ll[i]), ObjectPropertyDescriptor::AllPresent));
+    }
+    return ret;
+}
+
 void GlobalObject::installIntl(ExecutionState& state)
 {
     m_intl = new Object(state);
@@ -2602,6 +2614,10 @@ void GlobalObject::installIntl(ExecutionState& state)
 
     m_intl->defineOwnProperty(state, ObjectPropertyName(strings->NumberFormat),
                               ObjectPropertyDescriptor(m_intlNumberFormat, (ObjectPropertyDescriptor::PresentAttribute)(ObjectPropertyDescriptor::WritablePresent | ObjectPropertyDescriptor::ConfigurablePresent)));
+
+    FunctionObject* getCanonicalLocales = new FunctionObject(state, NativeFunctionInfo(strings->getCanonicalLocales, builtinIntlGetCanonicalLocales, 0, nullptr, NativeFunctionInfo::Strict));
+    m_intl->defineOwnProperty(state, ObjectPropertyName(strings->getCanonicalLocales),
+                              ObjectPropertyDescriptor(getCanonicalLocales, (ObjectPropertyDescriptor::PresentAttribute)(ObjectPropertyDescriptor::WritablePresent | ObjectPropertyDescriptor::ConfigurablePresent)));
 }
 }
 
